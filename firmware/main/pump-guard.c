@@ -5,6 +5,7 @@
 #include "esp_timer.h"
 #include "esp_rom_sys.h"
 #include "esp_log.h"
+#include "csv_log.h"   // prints the DATA, line that tools/log_capture.py saves as CSV
 
 #define TRIG_GPIO GPIO_NUM_14
 #define ECHO_GPIO GPIO_NUM_27
@@ -126,6 +127,12 @@ void app_main(void)
             ESP_LOGI(TAG, "distance: %.1f cm", cm);
         }
         ESP_LOGI(TAG, "ok=%d timeout=%d rejected=%d", s_ok, s_timeout, s_rejected);
+
+        // One CSV row per filtered reading. NAN / -1 = value not available yet
+        // (raw, corrected and temperature will be filled in on Day 4 with the DHT22).
+        float median_distance_cm = (cm < 0) ? NAN : cm;
+        csv_log_measurement(-1, NAN, NAN, NAN, median_distance_cm,
+                            (uint32_t)s_ok, (uint32_t)s_timeout, (uint32_t)s_rejected);
         vTaskDelay(pdMS_TO_TICKS(200));
     }
 }
